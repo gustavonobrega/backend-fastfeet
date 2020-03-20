@@ -6,6 +6,7 @@ import SessionController from './app/controllers/SessionController';
 import RecipientController from './app/controllers/RecipientController';
 import FileController from './app/controllers/FileController';
 import DeliverymanController from './app/controllers/DeliverymanController';
+import DeliveryController from './app/controllers/DeliveryController';
 
 import authMiddleware from './app/middlewares/auth';
 
@@ -29,6 +30,11 @@ routes.get('/deliverymen', DeliverymanController.index);
 routes.get('/deliverymen/:id', DeliverymanController.show);
 routes.put('/deliverymen/:id', DeliverymanController.update);
 routes.delete('/deliverymen/:id', DeliverymanController.delete);
+
+// Deliveries
+
+routes.post('/deliveries', DeliveryController.store);
+routes.get('/deliveries', DeliveryController.index);
 
 routes.post('/files', upload.single('file'), FileController.store);
 
