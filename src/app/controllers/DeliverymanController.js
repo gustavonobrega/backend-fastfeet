@@ -1,8 +1,21 @@
+import * as Yup from 'yup';
 import Deliveryman from '../models/Deliveryman';
 import File from '../models/File';
 
 class DeliverymanController {
   async store(req, res) {
+    const schema = Yup.object().shape({
+      name: Yup.string().required(),
+      email: Yup.string()
+        .email()
+        .required(),
+      avatar_id: Yup.number().integer(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validations fails' });
+    }
+
     const deliverymanExists = await Deliveryman.findOne({
       where: { email: req.body.email },
     });
@@ -22,10 +35,22 @@ class DeliverymanController {
   }
 
   async update(req, res) {
+    const schema = Yup.object().shape({
+      name: Yup.string().required(),
+      email: Yup.string()
+        .email()
+        .required(),
+      avatar_id: Yup.number().integer(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validations fails' });
+    }
+
     const deliveryman = await Deliveryman.findByPk(req.params.id);
 
     if (!deliveryman) {
-      return res.status(400).json({ error: 'Deliveryman does not exists' });
+      return res.status(401).json({ error: 'Deliveryman does not exists' });
     }
 
     if (req.body.email !== deliveryman.email) {
@@ -34,7 +59,7 @@ class DeliverymanController {
       });
 
       if (deliverymanExists) {
-        return res.status(400).json({ error: 'Email already exists' });
+        return res.status(401).json({ error: 'Email already exists' });
       }
     }
 
