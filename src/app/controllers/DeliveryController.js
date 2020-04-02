@@ -53,7 +53,10 @@ class DeliveryController {
   }
 
   async index(req, res) {
-    const delivery = await Delivery.findAll({
+    const { page = 1 } = req.query;
+    const pageLimit = 5;
+
+    const { rows: delivery, count } = await Delivery.findAndCountAll({
       attributes: [
         'id',
         'product',
@@ -64,6 +67,8 @@ class DeliveryController {
         'canceled_at',
         'signature_id',
       ],
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
       include: [
         {
           model: Recipient,
@@ -85,7 +90,7 @@ class DeliveryController {
       ],
     });
 
-    return res.json(delivery);
+    return res.json({ delivery, lastPage: Math.ceil(count / pageLimit) });
   }
 
   async show(req, res) {

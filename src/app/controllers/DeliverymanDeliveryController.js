@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { startOfDay, endOfDay, getHours, parseISO, isBefore } from 'date-fns';
+import * as Yup from 'yup';
 import Delivery from '../models/Delivery';
 import Recipient from '../models/Recipient';
 import Deliveryman from '../models/Deliveryman';
@@ -8,7 +9,8 @@ import File from '../models/File';
 class DeliverymanDeliveryController {
   async index(req, res) {
     const { id } = req.params;
-    const { delivered } = req.query;
+    const { page = 1, delivered } = req.query;
+    const pageLimit = 2;
 
     const deliverymanExists = await Deliveryman.findByPk(id);
 
@@ -17,13 +19,15 @@ class DeliverymanDeliveryController {
     }
 
     if (delivered === 'false') {
-      const deliveries = await Delivery.findAll({
+      const { rows: deliveries, count } = await Delivery.findAndCountAll({
         where: {
           deliveryman_id: id,
           end_date: null,
           canceled_at: null,
         },
         attributes: ['id', 'product', 'start_date', 'end_date'],
+        limit: pageLimit,
+        offset: (page - 1) * pageLimit,
         include: [
           {
             model: File,
@@ -57,10 +61,10 @@ class DeliverymanDeliveryController {
           },
         ],
       });
-      return res.json(deliveries);
+      return res.json({ deliveries, lastPage: Math.ceil(count / pageLimit) });
     }
 
-    const deliveries = await Delivery.findAll({
+    const { rows: deliveries, count } = await Delivery.findAndCountAll({
       where: {
         deliveryman_id: id,
         end_date: {
@@ -68,6 +72,8 @@ class DeliverymanDeliveryController {
         },
       },
       attributes: ['id', 'product', 'start_date', 'end_date'],
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
       include: [
         {
           model: File,
@@ -101,10 +107,19 @@ class DeliverymanDeliveryController {
         },
       ],
     });
-    return res.json(deliveries);
+    return res.json({ deliveries, lastPage: Math.ceil(count / pageLimit) });
   }
 
   async update(req, res) {
+    const schema = Yup.object().shape({
+      start_date: Yup.date(),
+      end_date: Yup.date(),
+      signature_id: Yup.number(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validations fails' });
+    }
     const { id, deliveryId } = req.params;
 
     const deliverymanExists = await Deliveryman.findByPk(id);

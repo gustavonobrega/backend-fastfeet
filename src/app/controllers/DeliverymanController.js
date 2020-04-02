@@ -87,8 +87,13 @@ class DeliverymanController {
   }
 
   async index(req, res) {
-    const deliverymen = await Deliveryman.findAll({
+    const { page = 1 } = req.query;
+    const pageLimit = 5;
+
+    const { rows: deliverymen, count } = await Deliveryman.findAndCountAll({
       attributes: ['id', 'name', 'email', 'avatar_id'],
+      limit: pageLimit,
+      offset: (page - 1) * pageLimit,
       include: [
         {
           model: File,
@@ -98,7 +103,7 @@ class DeliverymanController {
       ],
     });
 
-    return res.json(deliverymen);
+    return res.json({ deliverymen, lastPage: Math.ceil(count / pageLimit) });
   }
 
   async show(req, res) {
