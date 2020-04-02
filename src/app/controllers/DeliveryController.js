@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { Op } from 'sequelize';
 import Delivery from '../models/Delivery';
 import Recipient from '../models/Recipient';
 import Deliveryman from '../models/Deliveryman';
@@ -53,10 +54,15 @@ class DeliveryController {
   }
 
   async index(req, res) {
-    const { page = 1 } = req.query;
+    const { page = 1, name } = req.query;
     const pageLimit = 5;
 
     const { rows: delivery, count } = await Delivery.findAndCountAll({
+      where: {
+        product: {
+          [Op.iLike]: `%${name}%`,
+        },
+      },
       attributes: [
         'id',
         'product',
